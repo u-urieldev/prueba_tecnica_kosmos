@@ -5,10 +5,20 @@ const App = () => {
   const [moveableComponents, setMoveableComponents] = useState([]);
   const [selected, setSelected] = useState(null);
 
-  const addMoveable = () => {
+  const addMoveable = async () => {
     // Create a new moveable component and add it to the array
     const COLORS = ["red", "blue", "yellow", "green", "purple"];
+    const FITS = ["fill", "cover", "contain"];
+    const randomNum = Math.floor(Math.random() * 99);
 
+    const img = await fetch(
+      `https://jsonplaceholder.typicode.com/photos/${randomNum}`,
+      {
+        method: "GET",
+      }
+    ).then((response) => response.json());
+
+    console.log(img);
     setMoveableComponents([
       ...moveableComponents,
       {
@@ -18,6 +28,8 @@ const App = () => {
         width: 100,
         height: 100,
         color: COLORS[Math.floor(Math.random() * COLORS.length)],
+        bgImage: img.url,
+        fit: FITS[Math.floor(Math.random() * FITS.length)],
         updateEnd: true,
       },
     ]);
@@ -54,9 +66,32 @@ const App = () => {
     }
   };
 
+  const removeMoveable = () => {
+    console.log(selected);
+    console.log(moveableComponents);
+
+    let newMoveables = moveableComponents.filter((moveable) => {
+      return moveable.id != selected;
+    });
+
+    setMoveableComponents(newMoveables);
+
+    // moveableComponents.
+
+    // const updatedMoveables = moveableComponents.map((moveable, i) => {
+    //   if (moveable.id === selected) {
+    //     // return { id, ...newComponent, updateEnd };
+    //     console.log("si");
+    //   }
+    //   return moveable;
+    // });
+    // setMoveableComponents(updatedMoveables);
+  };
+
   return (
     <main style={{ height: "100vh", width: "100vw" }}>
-      <button onClick={addMoveable}>Add Moveable1</button>
+      <button onClick={addMoveable}>Add Moveable</button>
+      <button onClick={removeMoveable}>Remove Selected Moveable</button>
       <div
         id="parent"
         style={{
@@ -84,6 +119,7 @@ const App = () => {
 export default App;
 
 const Component = ({
+  handleResizeStart,
   updateMoveable,
   top,
   left,
@@ -91,6 +127,8 @@ const Component = ({
   height,
   index,
   color,
+  fit,
+  bgImage,
   id,
   setSelected,
   isSelected = false,
@@ -129,14 +167,16 @@ const Component = ({
       left,
       width: newWidth,
       height: newHeight,
+      bgImage,
+      fit,
       color,
     });
 
     // ACTUALIZAR NODO REFERENCIA
     const beforeTranslate = e.drag.beforeTranslate;
 
-    ref.current.style.width = `${e.width}px`;
-    ref.current.style.height = `${e.height}px`;
+    ref.current.style.width = `${newWidth}px`;
+    ref.current.style.height = `${newHeight}px`;
 
     let translateX = beforeTranslate[0];
     let translateY = beforeTranslate[1];
@@ -179,9 +219,42 @@ const Component = ({
         width: newWidth,
         height: newHeight,
         color,
+        bgImage,
+        fit,
       },
       true
     );
+  };
+
+  const onDrag = (e) => {
+    console.log(fit);
+    let newTop = e.top;
+    let newLeft = e.left;
+
+    // Check if one side of the rectangle is out of border
+    // by checking it's relative position in comparision to the parent
+    if (e.top < 0) {
+      newTop = 0;
+    } else if (e.top + height > parentBounds?.height) {
+      newTop = parentBounds?.height - height;
+    }
+
+    if (e.left < 0) {
+      newLeft = 0;
+    } else if (e.left + width > parentBounds?.width) {
+      newLeft = parentBounds?.width - width;
+    }
+
+    // Call the function to update whit the restricted values if needed
+    updateMoveable(id, {
+      top: newTop,
+      left: newLeft,
+      width,
+      height,
+      color,
+      bgImage,
+      fit,
+    });
   };
 
   return (
@@ -197,6 +270,8 @@ const Component = ({
           width: width,
           height: height,
           background: color,
+          backgroundImage: `url(${bgImage})`,
+          objectFit: `${fit}`,
         }}
         onClick={() => setSelected(id)}
       />
@@ -205,15 +280,7 @@ const Component = ({
         target={isSelected && ref.current}
         resizable
         draggable
-        onDrag={(e) => {
-          updateMoveable(id, {
-            top: e.top,
-            left: e.left,
-            width,
-            height,
-            color,
-          });
-        }}
+        onDrag={onDrag}
         onResize={onResize}
         onResizeEnd={onResizeEnd}
         keepRatio={false}
