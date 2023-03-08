@@ -18,7 +18,6 @@ const App = () => {
       }
     ).then((response) => response.json());
 
-    console.log(img);
     setMoveableComponents([
       ...moveableComponents,
       {
@@ -45,7 +44,8 @@ const App = () => {
     setMoveableComponents(updatedMoveables);
   };
 
-  const handleResizeStart = (index, e) => {
+  // This is implemented directly in onResize method
+  const handleResizeStart = (index, e, left) => {
     console.log("e", e.direction);
     // Check if the resize is coming from the left handle
     const [handlePosX, handlePosY] = e.direction;
@@ -59,9 +59,10 @@ const App = () => {
     if (handlePosX === -1) {
       console.log("width", moveableComponents, e);
       // Save the initial left and width values of the moveable component
-      const initialLeft = e.left;
+      const initialLeft = left;
       const initialWidth = e.width;
 
+      console.log(initialLeft);
       // Set up the onResize event handler to update the left value based on the change in width
     }
   };
@@ -75,17 +76,6 @@ const App = () => {
     });
 
     setMoveableComponents(newMoveables);
-
-    // moveableComponents.
-
-    // const updatedMoveables = moveableComponents.map((moveable, i) => {
-    //   if (moveable.id === selected) {
-    //     // return { id, ...newComponent, updateEnd };
-    //     console.log("si");
-    //   }
-    //   return moveable;
-    // });
-    // setMoveableComponents(updatedMoveables);
   };
 
   return (
@@ -151,8 +141,40 @@ const Component = ({
 
   const onResize = async (e) => {
     // ACTUALIZAR ALTO Y ANCHO
+    console.log(e.direction);
+
+    const [handlePosX, handlePosY] = e.direction;
     let newWidth = e.width;
     let newHeight = e.height;
+    let newLeft = left;
+    let newTop = top;
+
+    // Left
+    if (handlePosX === -1) {
+      const initialLeft = left;
+      const initialWidth = e.width;
+
+      const diference = initialWidth - width;
+      newLeft = left - diference;
+
+      console.log(newLeft);
+      if (newLeft <= parentBounds?.left) {
+        newLeft = parentBounds?.left;
+      }
+    }
+
+    if (handlePosY === -1) {
+      const initialTop = top;
+      const initialHeight = e.height;
+
+      const diference = e.height - height;
+      newTop = top - diference;
+
+      console.log(newLeft);
+      if (top <= parentBounds?.top) {
+        newTop = parentBounds?.top;
+      }
+    }
 
     const positionMaxTop = top + newHeight;
     const positionMaxLeft = left + newWidth;
@@ -163,8 +185,8 @@ const Component = ({
       newWidth = parentBounds?.width - left;
 
     updateMoveable(id, {
-      top,
-      left,
+      top: newTop,
+      left: newLeft,
       width: newWidth,
       height: newHeight,
       bgImage,
@@ -227,7 +249,6 @@ const Component = ({
   };
 
   const onDrag = (e) => {
-    console.log(fit);
     let newTop = e.top;
     let newLeft = e.left;
 
