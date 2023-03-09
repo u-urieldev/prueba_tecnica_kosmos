@@ -125,6 +125,7 @@ const Component = ({
   updateEnd,
 }) => {
   const ref = useRef();
+  let inBorder = false;
 
   const [nodoReferencia, setNodoReferencia] = useState({
     top,
@@ -141,8 +142,6 @@ const Component = ({
 
   const onResize = async (e) => {
     // ACTUALIZAR ALTO Y ANCHO
-    console.log(e.direction);
-
     const [handlePosX, handlePosY] = e.direction;
     let newWidth = e.width;
     let newHeight = e.height;
@@ -151,28 +150,27 @@ const Component = ({
 
     // Left
     if (handlePosX === -1) {
-      const initialLeft = left;
+      // const actualWidth
+      const actualWidth = width;
       const initialWidth = e.width;
 
-      const diference = initialWidth - width;
+      // Substract the actual for new
+      const diference = initialWidth - actualWidth;
       newLeft = left - diference;
-
-      console.log(newLeft);
-      if (newLeft <= parentBounds?.left) {
-        newLeft = parentBounds?.left;
-      }
     }
 
+    // Top
     if (handlePosY === -1) {
-      const initialTop = top;
-      const initialHeight = e.height;
+      const actualHeight = height;
+      const eventHeight = e.height;
 
-      const diference = e.height - height;
+      // Substract the actual for new
+      const diference = eventHeight - actualHeight;
       newTop = top - diference;
 
-      console.log(newLeft);
-      if (top <= parentBounds?.top) {
-        newTop = parentBounds?.top;
+      if (top <= 0) {
+        top = 0;
+        newHeight = height;
       }
     }
 
@@ -200,6 +198,9 @@ const Component = ({
     ref.current.style.width = `${newWidth}px`;
     ref.current.style.height = `${newHeight}px`;
 
+    // if (inBorder) {
+    //   let translateX = beforeTranslate[0];
+    // }
     let translateX = beforeTranslate[0];
     let translateY = beforeTranslate[1];
 
@@ -230,8 +231,13 @@ const Component = ({
     const { drag } = lastEvent;
     const { beforeTranslate } = drag;
 
-    const absoluteTop = top + beforeTranslate[1];
+    let absoluteTop = top + beforeTranslate[1];
     const absoluteLeft = left + beforeTranslate[0];
+
+    if (top <= 0) {
+      absoluteTop = 0;
+      newHeight = height;
+    }
 
     updateMoveable(
       id,
@@ -290,7 +296,7 @@ const Component = ({
           left: left,
           width: width,
           height: height,
-          background: color,
+          // background: color,
           backgroundImage: `url(${bgImage})`,
           objectFit: `${fit}`,
         }}
