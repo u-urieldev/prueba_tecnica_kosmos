@@ -157,6 +157,11 @@ const Component = ({
       // Substract the actual for new
       const diference = initialWidth - actualWidth;
       newLeft = left - diference;
+
+      if (left <= 0) {
+        left = 0;
+        newWidth = width;
+      }
     }
 
     // Top
